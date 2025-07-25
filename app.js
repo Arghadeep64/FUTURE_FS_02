@@ -11,7 +11,11 @@ function App() {
   });
   const [orders, setOrders] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState("All");
-  
+  const [notification, setNotification] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+const [popupMessage, setPopupMessage] = useState("");
+
+
 
   const products = [
     {
@@ -142,15 +146,22 @@ function App() {
 
 
   const addToCart = (product) => {
-    setCart((prev) => {
-      const found = prev.find((item) => item.id === product.id);
-      return found
-        ? prev.map((item) =>
-            item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-          )
-        : [...prev, { ...product, qty: 1 }];
-    });
-  };
+  setCart((prev) => {
+    const found = prev.find((item) => item.id === product.id);
+    return found
+      ? prev.map((item) =>
+          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+        )
+      : [...prev, { ...product, qty: 1 }];
+  });
+
+  // Show popup
+  setPopupMessage(`${product.name} added to cart 🛒`);
+  setShowPopup(true);
+
+  setTimeout(() => setShowPopup(false), 2500);
+};
+
 
   const updateQty = (id, qty) => {
     setCart((prev) =>
@@ -203,6 +214,27 @@ function App() {
           </div>
         </div>
       </div>
+      {showPopup && (
+  <div
+    style={{
+      position: "fixed",
+      top: "20px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      backgroundColor: "#4caf50",
+      color: "white",
+      padding: "12px 20px",
+      borderRadius: "6px",
+      boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+      fontSize: "1rem",
+      zIndex: 1000,
+      transition: "opacity 0.3s ease-in-out"
+    }}
+  >
+    {popupMessage}
+  </div>
+)}
+
 
       {/* 🔍 Search Box */}
       <div className="search-box">
@@ -234,59 +266,91 @@ function App() {
       </div>
 
       {/* 🛍️ Product Grid */}
-      <div className="product-list">
-        {filtered.map((p) => (
-          <div key={p.id} className="product">
-            <h2>{p.name}</h2>
-            <img src={p.image} alt={p.name} />
-            <p>₹{p.price}</p>
-            <button onClick={() => addToCart(p)} className="button">
-              Add to Cart
-            </button>
-          </div>
-        ))}
+<div className="product-list">
+  {filtered.length === 0 ? (
+    <p
+      className="no-results"
+      style={{
+        fontSize: "2rem",
+        textAlign: "center",
+        marginTop: "2rem",
+        width: "100%",
+      }}
+    >
+      No results found 
+    </p>
+  ) : (
+    filtered.map((p) => (
+      <div key={p.id} className="product">
+        <h2>{p.name}</h2>
+        <img src={p.image} alt={p.name} />
+        <p>₹{p.price}</p>
+        <button onClick={() => addToCart(p)} className="button">
+          Add to Cart
+        </button>
       </div>
+    ))
+  )}
+</div>
+
+
 
       {/* 🧺 Cart */}
-      <div className="cart">
-        <h2 className="cart-title">🧺 Your Shopping Cart</h2>
-        {cart.length === 0 ? (
-          <p>Your cart is empty.</p>
-        ) : (
-          <>
-            <ul>
-              {cart.map((item) => (
-                <li key={item.id} className="cart-item">
-                  <span>
-                    {item.name} <strong>₹{item.price}</strong>
-                  </span>
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.qty}
-                    onChange={(e) =>
-                      updateQty(item.id, parseInt(e.target.value))
-                    }
-                    className="cart-input"
-                  />
-                  <button
-                    onClick={() => removeFromCart(item.id)}
-                    className="remove-btn"
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <p className="cart-total">
-              <strong>
-                Total Amount: ₹
-                {cart.reduce((sum, item) => sum + item.price * item.qty, 0)}
-              </strong>
-            </p>
-          </>
-        )}
-      </div>
+{notification && (
+  <div
+    className="notification"
+    style={{
+      fontSize: "1.2rem",
+      color: "green",
+      textAlign: "center",
+      marginBottom: "1rem",
+    }}
+  >
+    {notification}
+  </div>
+)}
+
+<div className="cart">
+  <h2 className="cart-title">🧺 Your Shopping Cart</h2>
+  {cart.length === 0 ? (
+    <p>Your cart is empty.</p>
+  ) : (
+    <>
+      <ul>
+        {cart.map((item) => (
+          <li key={item.id} className="cart-item">
+            <span>
+              {item.name} <strong>₹{item.price}</strong>
+            </span>
+            <input
+              type="number"
+              min="1"
+              value={item.qty}
+              onChange={(e) =>
+                updateQty(item.id, parseInt(e.target.value))
+              }
+              className="cart-input"
+            />
+            <button
+              onClick={() => removeFromCart(item.id)}
+              className="remove-btn"
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p className="cart-total">
+        <strong>
+          Total Amount: ₹
+          {cart.reduce((sum, item) => sum + item.price * item.qty, 0)}
+        </strong>
+      </p>
+    </>
+  )}
+</div>
+
+
 
       {/* ✅ Checkout Form */}
       <div className="checkout">
@@ -303,6 +367,13 @@ function App() {
           placeholder="Your Email"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
+          className="input"
+        />
+        <input
+          type="phone number"
+          placeholder="Your Phone Number"
+          value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
           className="input"
         />
         <input
